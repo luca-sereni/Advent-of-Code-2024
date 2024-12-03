@@ -1,4 +1,4 @@
-file_read = open("/home/luca/Downloads/input.txt", "r")
+file_read = open("day1/input.txt", "r")
 
 column1 = []
 column2 = []
