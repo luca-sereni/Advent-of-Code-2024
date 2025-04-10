@@ -1,37 +1,56 @@
 file_to_read = open("day5/input.txt", "r")
 
-def find_first_index(n: int) -> int:
-    for i in range(len(rules)):
-        if rules[i][0] == n:
-            return i
-    return -1
+def is_update_valid(update: list) -> bool:
+    elements_checked = []
+    for elem in update:
+        if len(elements_checked) == 0 or elem not in rules:
+            elements_checked.append(elem)
+            continue
+        for checked_elem in elements_checked:
+            if checked_elem in rules[elem]:
+                return False
+        elements_checked.append(elem)
+    return True
+    
+def fix_update(update: list):
+    temp_update = update
+    fixed = False
+    while not fixed:
+        elements_checked = {}
+        ok = True
+        for i, elem in enumerate(temp_update):
+            if len(elements_checked) == 0 or elem not in rules:
+                elements_checked[elem] = i
+                continue
+            for elem_checked_key, elem_checked_index in elements_checked.items():
+                if elem_checked_key in rules[elem]:
+                    #Switch side
+                    temp_update.pop(elem_checked_index)
+                    temp_update.insert(i, elem_checked_key)
+                    ok = False
+                    break
+            if not ok:
+                break
+        if ok:
+            fixed = True
+    fixed_updates.append(temp_update)
+    
 
-def find_previous_element(n: int, elements_already_found: list) -> int:
-    first_index = find_first_index(n)
-    if first_index == -1:
-        return -1
-    i = first_index
-    equal = True
-    while equal and i < len(rules):
-        if rules[i][0] == n:
-            # if the element that must be after the current element has been already found, then it doesn't respect the rule
-            if len(elements_already_found) != 0 and elements_already_found.count(rules[i][1]) > 0:
-                return rules[i][1]
-            i += 1
-        else:
-            equal = False
-    return -1
-rules = []
 
+#Add rules
+rules = {}
 for line in file_to_read:
     if line == "\n":
         break
     content = line.strip("\n").split('|')
-    new_content = [int(content[0]), int(content[1])]
-    rules.append(new_content)
+    key = int(content[0])
+    if key not in rules:
+        rules[key] = []
+    #new_content = [int(content[0]), int(content[1])]
+    rules[key].append(int(content[1]))
 
+#Add updates
 updates = []
-
 for line in file_to_read:
     content = line.strip("\n").split(',')
     new_content = []
@@ -41,27 +60,32 @@ for line in file_to_read:
 
 file_to_read.close()
 
-rules.sort()
-
 updates_ok = []
 updates_ko = []
-ok = True
 
 for update in updates:
     ok = True
     elements_already_found = []
-    for elem in update:
-        if find_previous_element(elem, elements_already_found) != -1:
-            ok = False
-            break
-        elements_already_found.append(elem)
-    if ok:
+    if is_update_valid(update):
         updates_ok.append(update)
     else:
         updates_ko.append(update)
 
+# 1st Part
 sum = 0
 for update in updates_ok:
+    middle_element = update[int(len(update) / 2)]
+    sum += middle_element
+print(sum)
+
+# 2nd Part
+fixed_updates = []
+
+for update in updates_ko:
+    fix_update(update)
+
+sum = 0
+for update in fixed_updates:
     middle_element = update[int(len(update) / 2)]
     sum += middle_element
 print(sum)
