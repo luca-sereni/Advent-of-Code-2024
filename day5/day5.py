@@ -64,8 +64,6 @@ updates_ok = []
 updates_ko = []
 
 for update in updates:
-    ok = True
-    elements_already_found = []
     if is_update_valid(update):
         updates_ok.append(update)
     else:
@@ -83,6 +81,10 @@ fixed_updates = []
 
 for update in updates_ko:
     fix_update(update)
+
+for update in fixed_updates:
+    if not is_update_valid(update):
+            print(update)
 
 sum = 0
 for update in fixed_updates:

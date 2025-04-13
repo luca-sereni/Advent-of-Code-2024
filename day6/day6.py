@@ -1,8 +1,4 @@
-def find_cross(i: int, j:int, grid: list) -> int:
-    for k in range(len(grid)):
-        if grid[k][0] == i and grid[k][1] == j:
-            return k
-    return -1
+import copy
 
 file_to_read = open("day6/input.txt", "r")
 
@@ -25,178 +21,15 @@ while i < len(grid) and not found:
             break
     i += 1
 
-i = starting_position[0]
-j = starting_position[1]
-
-obstacles = []
-directions = [("up", '^', 'U'), ("down", 'v', 'D'), ("left", '<', 'L'), ("right", '>', 'R')]
-crosses = []
-
-
-add_new_obstacle = True
-current_direction = directions[0]
-
-while add_new_obstacle:
-    temp_grid = grid.copy()
-    i = starting_position[0]
-    j = starting_position[1]
-    add_new_obstacle = False
-    while i >= 0 and j >= 0 and i < len(temp_grid) and j < len(temp_grid[i]):
-        match current_direction[0]:
-            case "up":
-                if i == 0:
-                    break
-                if grid[i - 1][j] != "#":
-                    if grid[i - 1][j] == "R": # a new obstacle could be added
-                        if obstacles.count((i - 2, j)) == 0 and i-2 != starting_position[0] and j != starting_position[1]:
-                            obstacles.append((i - 2, j))
-                            add_new_obstacle = True
-                            break
-                        else:
-                            grid[i - 1][j] = "+"
-                            crosses.append((i - 1, j, ['R', 'U']))
-                    elif grid[i - 1][j] == "+":
-                        index_cross = find_cross(i - 1, j, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('U')
-                            if crosses[index_cross][2].count('R') > 0:
-                                if obstacles.count((i - 2, j)) == 0 and i-2 != starting_position[0] and j != starting_position[1]:
-                                    obstacles.append((i - 2, j))
-                                    add_new_obstacle = True
-                                    break
-                    grid[i][j] = current_direction[2]
-                    i -= 1
-                    grid[i][j] = current_direction[1]
-                else:
-                    if grid[i][j] == '.':
-                        grid[i][j] = '+'
-                        crosses.append((i, j, ['U', 'R']))
-                    else:
-                        if grid[i][j] == "+":
-                            index_cross = find_cross(i, j, crosses)
-                            if index_cross != -1:
-                                crosses[index_cross][2].append('U')
-                                crosses[index_cross][2].append('R')
-                        else:
-                            crosses.append((i, j, ['U', 'R']))
-                            grid[i][j] = '+'
-                    current_direction = directions[3]  # right
-            case "down":
-                if i == len(grid) - 1:
-                    break
-                if grid[i + 1][j] != "#":
-                    if grid[i + 1][j] == "L": # a new obstacle could be added
-                        if obstacles.count((i + 2, j)) == 0 and i+2 != starting_position[0] and j != starting_position[1]:
-                            obstacles.append((i + 2, j))
-                            add_new_obstacle = True
-                            break
-                        else:
-                            grid[i + 1][j] = "+"
-                            crosses.append((i + 1, j, ['L', 'D']))
-                    elif grid[i + 1][j] == "+":
-                        index_cross = find_cross(i + 1, j, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('D')
-                            if crosses[index_cross][2].count('L') > 0:
-                                if obstacles.count((i + 2, j)) == 0 and i+2 != starting_position[0] and j != starting_position[1]:
-                                    obstacles.append((i + 2, j))
-                                    add_new_obstacle = True
-                                    break
-                    grid[i][j] = current_direction[2]
-                    i += 1
-                    grid[i][j] = current_direction[1]
-                else:
-                    if grid[i][j] == "+":
-                        index_cross = find_cross(i, j, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('D')
-                            crosses[index_cross][2].append('L')
-                    else:
-                        crosses.append((i, j, ['D', 'L']))
-                        grid[i][j] = '+'
-                    current_direction = directions[2]  # left
-            case "left":
-                if j == 0:
-                    break
-                if grid[i][j - 1] != "#":
-                    if grid[i][j - 1] == "U": # a new obstacle could be added
-                        if obstacles.count((i, j - 2)) == 0 and i != starting_position[0] and j-2 != starting_position[1]:
-                            obstacles.append((i, j - 2))
-                            add_new_obstacle = True
-                            break
-                        else:
-                            grid[i][j - 1] = "+"
-                            crosses.append((i, j - 1, ['U', 'L']))
-                    elif grid[i][j - 1] == "+":
-                        index_cross = find_cross(i, j - 1, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('L')
-                            if crosses[index_cross][2].count('U') > 0:
-                                if obstacles.count((i, j - 2)) == 0 and i != starting_position[0] and j-2 != starting_position[1]:
-                                    obstacles.append((i, j - 2))
-                                    add_new_obstacle = True
-                                    break
-                    grid[i][j] = current_direction[2]
-                    j -= 1
-                    grid[i][j] = current_direction[1]
-                else:
-                    if grid[i][j] == "+":
-                        index_cross = find_cross(i, j, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('L')
-                            crosses[index_cross][2].append('U')
-                    else:
-                        crosses.append((i, j, ['L', 'U']))
-                        grid[i][j] = '+'
-                    current_direction = directions[0]  # up
-            case "right":
-                if j == len(grid[i]) - 1:
-                    break
-                if grid[i][j + 1] != "#":
-                    if grid[i][j + 1] == "D": # a new obstacle could be added
-                        if obstacles.count((i, j + 2)) == 0 and i != starting_position[0] and j+2 != starting_position[1]:
-                            obstacles.append((i, j + 2))
-                            add_new_obstacle = True
-                            break
-                        else:
-                            grid[i][j + 1] = "+"
-                            crosses.append((i, j + 1, ['D', 'R']))
-                    elif grid[i][j - 1] == "+":
-                        index_cross = find_cross(i, j - 1, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('R')
-                            if crosses[index_cross][2].count('D') > 0:
-                                if obstacles.count((i, j + 2)) == 0 and i != starting_position[0] and j+2 != starting_position[1]:
-                                    obstacles.append((i, j + 2))
-                                    add_new_obstacle = True
-                                    break
-                    grid[i][j] = current_direction[2]
-                    j += 1
-                    grid[i][j] = current_direction[1]
-                else:
-                    if grid[i][j] == "+":
-                        index_cross = find_cross(i, j, crosses)
-                        if index_cross != -1:
-                            crosses[index_cross][2].append('R')
-                            crosses[index_cross][2].append('D')
-                    else:
-                        crosses.append((i, j, ['R', 'D']))
-                        grid[i][j] = '+'
-                    current_direction = directions[1]  # down
-
-print(crosses)
-print(len(obstacles))
-
+directions = {"up": ('^', 'U'), "down": ('v', 'D'), "left": ('<', 'L'), "right": ('>', 'R')}
+current_direction = directions["up"]  #Start going up
 
 """ FIRST PART
-directions = [("up", '^'), ("down", 'v'), ("left", '<'), ("right", '>')]
-
-current_direction = directions[0]
 position_count = 1
 
 while i >= 0 and j >= 0 and i < len(grid) and j < len(grid[i]):
-    match current_direction[0]:
-        case "up":
+    match current_direction[1]:
+        case "U":
             if i == 0:
                 break
             if grid[i - 1][j] != "#":
@@ -204,10 +37,10 @@ while i >= 0 and j >= 0 and i < len(grid) and j < len(grid[i]):
                     position_count += 1
                 grid[i][j] = 'X'
                 i -= 1
-                grid[i][j] = current_direction[1]
+                grid[i][j] = current_direction[0]
             else:
-                current_direction = directions[3]  # right
-        case "down":
+                current_direction = directions["right"]  # right
+        case "D":
             if i == len(grid) - 1:
                 break
             if grid[i + 1][j] != "#":
@@ -215,10 +48,10 @@ while i >= 0 and j >= 0 and i < len(grid) and j < len(grid[i]):
                     position_count += 1
                 grid[i][j] = "X"
                 i += 1
-                grid[i][j] = current_direction[1]
+                grid[i][j] = current_direction[0]
             else:
-                current_direction = directions[2]  # left
-        case "left":
+                current_direction = directions["left"]  # left
+        case "L":
             if j == 0:
                 break
             if grid[i][j - 1] != "#":
@@ -226,10 +59,10 @@ while i >= 0 and j >= 0 and i < len(grid) and j < len(grid[i]):
                     position_count += 1
                 grid[i][j] = "X"
                 j -= 1
-                grid[i][j] = current_direction[1]
+                grid[i][j] = current_direction[0]
             else:
-                current_direction = directions[0]  # up
-        case "right":
+                current_direction = directions["up"]  # up
+        case "R":
             if j == len(grid[i]) - 1:
                 break
             if grid[i][j + 1] != "#":
@@ -237,9 +70,87 @@ while i >= 0 and j >= 0 and i < len(grid) and j < len(grid[i]):
                     position_count += 1
                 grid[i][j] = "X"
                 j += 1
-                grid[i][j] = current_direction[1]
+                grid[i][j] = current_direction[0]
             else:
-                current_direction = directions[1]  # down
+                current_direction = directions["down"]  # down
 
 print(position_count)
 """
+
+MAX_LOOP_COUNT = 50
+
+def run_simulation(temp_grid: list[list], current_direction: tuple) -> bool:
+    i = starting_position[0]
+    j = starting_position[1]
+    current_direction = current_direction
+    to_add = False
+    obstacles_found = []
+    while i >= 0 and j >= 0 and i < len(temp_grid) and j < len(temp_grid[0]):
+        match current_direction[1]:
+            case "U":
+                if i == 0:
+                    #Reached the top of the grid
+                    to_add = False
+                    break
+                if temp_grid[i - 1][j] != "#":
+                    i -= 1 #Moving up
+                else:
+                    obstacles_found.append((i - 1, j, current_direction[1]))
+                    if obstacles_found.count((i - 1, j, current_direction[1])) > MAX_LOOP_COUNT:
+                        to_add = True
+                        break
+                    current_direction = directions["right"]  # right
+            case "D":
+                if i == len(temp_grid) - 1:
+                    #Reached the bottom of the grid
+                    to_add = False
+                    break
+                if temp_grid[i + 1][j] != "#":
+                    i += 1 #Moving down
+                else:
+                    obstacles_found.append((i + 1, j, current_direction[1]))
+                    if obstacles_found.count((i + 1, j, current_direction[1])) > MAX_LOOP_COUNT:
+                        to_add = True
+                        break
+                    current_direction = directions["left"]  # left
+            case "L":
+                if j == 0:
+                    #Reached the left part of the grid
+                    to_add = False
+                    break
+                if temp_grid[i][j - 1] != "#":
+                    j -= 1 #Moving left
+                else:
+                    obstacles_found.append((i, j - 1, current_direction[1]))
+                    if obstacles_found.count((i, j - 1, current_direction[1])) > MAX_LOOP_COUNT:
+                        to_add = True
+                        break
+                    current_direction = directions["up"]  # up
+            case "R":
+                if j == len(temp_grid[i]) - 1:
+                    #Reached the right part of the grid
+                    to_add = False
+                    break
+                if temp_grid[i][j + 1] != "#":
+                    j += 1 #Moving right
+                else:
+                    obstacles_found.append((i, j + 1, current_direction[1]))
+                    if obstacles_found.count((i, j + 1, current_direction[1])) > MAX_LOOP_COUNT:
+                        to_add = True
+                        break
+                    current_direction = directions["down"]  # down
+    return to_add
+
+obstacles = []
+for i in range(len(grid)):
+    for j in range(len(grid[i])):
+        temp_grid = grid
+        if temp_grid[i][j] != "#" and temp_grid[i][j] != '^' and not (i == starting_position[0] - 1 and j == starting_position[1]):
+            temp_grid[i][j] = '#'
+            to_add = run_simulation(temp_grid, current_direction)
+            if to_add:
+                print((i, j))
+                obstacles.append((i, j))
+            temp_grid[i][j] = '.'
+
+print(len(obstacles))
