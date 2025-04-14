@@ -38,6 +38,41 @@ def compute_antinodes(antennas: dict) -> list:
 
     return antinodes
 
+def compute_antinodes_v2(antennas: dict) -> list:
+    antinodes = []
+    for key, values in antennas.items():
+        # If there is a single antenna, no antinode to add
+        if len(values) < 2:
+            continue
+        for i in range(len(values)):
+            antenna = values[i]
+            if antenna not in antinodes:
+                antinodes.append(antenna)
+            for j in range(len(values)):
+                diffs = compute_differences(antenna, values)
+                for diff in diffs:
+                    # To prevent infinite loop
+                    if diff[0] == 0 and diff[1] == 0:
+                        continue
+                    
+                    increment = 0
+                    possible_pos1 = (antenna[0] + (increment*diff[0]), antenna[1] + (increment*diff[1]))
+                    while is_valid_position(possible_pos1) == True:
+                        if possible_pos1 not in antinodes:
+                            antinodes.append(possible_pos1)
+                        increment += 1
+                        possible_pos1 = (antenna[0] + increment*diff[0], antenna[1] + increment*diff[1])
+                    
+                    increment = 0
+                    possible_pos2 = (antenna[0] - increment*diff[0], antenna[1] - increment*diff[1])
+                    while is_valid_position(possible_pos2) == True:
+                        if possible_pos2 not in antinodes:
+                            antinodes.append(possible_pos2)
+                        increment += 1
+                        possible_pos2 = (antenna[0] - increment*diff[0], antenna[1] - increment*diff[1])
+
+    return antinodes
+
 antennas = defaultdict(list)
 for i in range(0, height):
     line = lines[i].strip()
@@ -45,5 +80,10 @@ for i in range(0, height):
         if line[j] != '.':
             antennas[line[j]].append((i, j))
 
+# Part 1
 antinodes = compute_antinodes(antennas)
 print(len(antinodes))
+
+# Part 2
+antinodes_v2 = compute_antinodes_v2(antennas)
+print(len(antinodes_v2))
