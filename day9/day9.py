@@ -39,11 +39,10 @@ def compute_checksum(blocks: list) -> int:
     # Transform the blocks into a list of integers
     new_blocks = []
     for block in blocks:
-        if block[0] != -1:
-            i = 0
-            while i < block[1]:
-                new_blocks.append(block[0])
-                i += 1
+        i = 0
+        while i < block[1]:
+            new_blocks.append(block[0])
+            i += 1
     # Compute the checksum
     checksum = 0
     for i in range(len(new_blocks)):
@@ -51,6 +50,38 @@ def compute_checksum(blocks: list) -> int:
             checksum += new_blocks[i] * i
 
     return checksum
+
+def move_blocks_v2(blocks: list):
+    j = len(blocks) - 1
+
+    while j > 0:
+        if blocks[j][0] != -1:
+            i = 0
+            while i < j:
+                if blocks[i][0] == -1:
+                    if blocks[j][1] == blocks[i][1]:
+                        # Block to move == free space
+                        free_space = blocks[i][1]
+                        blocks[i] = (blocks[j][0], blocks[j][1])
+                        blocks[j] = (-1, free_space)
+                        break
+                    elif blocks[j][1] < blocks[i][1]:
+                        # Block to move < free space
+                        temp_size = blocks[i][1]
+                        dim_block = blocks[j][1]
+                        blocks[i] = (blocks[j][0], dim_block)
+                        blocks[j] = (-1, dim_block)
+                        blocks.insert(i + 1, (-1, temp_size - dim_block))
+                        # to fix j after the insertion
+                        j += 1
+                        break
+                    else:
+                        # Block to move > free space --> skip
+                        i += 1
+                else:
+                    i += 1
+        j -= 1
+
 
 file = open("day9/input.txt", "r")
 content = file.read()
@@ -69,6 +100,11 @@ while content[index] != '\n':
             blocks.append((-1, int(content[index])))
     index += 1
 
+original_blocks = [block for block in blocks]
 # 1st part
 move_blocks(blocks)
 print(compute_checksum(blocks))
+
+# 2nd part
+move_blocks_v2(original_blocks)
+print(compute_checksum(original_blocks))
