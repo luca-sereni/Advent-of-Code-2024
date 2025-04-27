@@ -1,4 +1,4 @@
-use std::{fs::File, io::{BufRead, BufReader}, path::Path};
+use std::{fs::File, io::{BufRead, BufReader}};
 
 pub const GRID_WIDTH: usize = 101;
 pub const GRID_HEIGHT: usize = 103;
