@@ -1,9 +1,9 @@
-use std::{fs::File, io::{BufRead, BufReader}};
+use std::{fs::File, io::{BufRead, BufReader}, path::Path};
 
 pub const GRID_WIDTH: usize = 101;
 pub const GRID_HEIGHT: usize = 103;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Position {
     x: usize,
     y: usize,
@@ -26,7 +26,7 @@ impl Position {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Velocity {
     vel_x: isize,
     vel_y: isize,
@@ -38,7 +38,7 @@ impl Velocity {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Robot {
     current_position: Position,
     velocity: Velocity,
@@ -104,6 +104,24 @@ fn assign_to_quadrant(quadrants: &mut [usize; 4], robot: &Robot) {
     }
 }
 
+fn print_grid(grid: [[usize; GRID_WIDTH]; GRID_HEIGHT], iteration: usize) {
+    use std::io::Write;
+    let filename = format!("file{}.txt", iteration);
+    let file = File::create(&filename);
+    if let Ok(mut file) = file {
+        for row in grid.iter() {
+            for elem in row.iter() {
+                if *elem == 0 {
+                    write!(file, ".").unwrap();
+                } else {
+                    write!(file, "#").unwrap();
+                }
+            }
+            write!(file, "\n").unwrap();
+        }
+    }
+}
+
 const NUM_SECONDS: isize = 100;
 
 fn main() {
@@ -118,7 +136,9 @@ fn main() {
             robots.push(parse_robot(s));
         }
     }
-    
+
+    let mut robots_part2: Vec<Robot> = Vec::new();
+    robots_part2.extend(robots.iter().cloned());
     // Array representing the number of robots inside each quadrant
     let mut quadrants: [usize; 4] = [0, 0, 0, 0];
     
@@ -134,4 +154,28 @@ fn main() {
         safety_factor *= quadrants[i];
     }
     println!("{}", safety_factor);
+
+    // PART2
+
+    let mut grid: [[usize; GRID_WIDTH]; GRID_HEIGHT] = [[0; GRID_WIDTH]; GRID_HEIGHT];
+    for robot in robots_part2.iter() {
+        grid[robot.current_position.y][robot.current_position.x] += 1;
+    }
+
+    // Since no figure of the tree is provided, I checked the first 100 images to see if there is an interesting pattern.
+    // Every 103 iterations, all the robots are near each other.
+    // 7752 -> 7753 seconds because it starts from 0
+
+    let indexes: [usize; 100] = (0..100).map(|i| 27 + 103 * i).collect::<Vec<_>>().try_into().unwrap();
+
+    for i in 0..105*100 {
+        for robot in robots_part2.iter_mut() {
+            grid[robot.current_position.y][robot.current_position.x] -= 1;
+            robot.update_position(robot.velocity.vel_x, robot.velocity.vel_y);
+            grid[robot.current_position.y][robot.current_position.x] += 1;
+        }
+        if indexes.contains(&i) {
+            print_grid(grid, i as usize);
+        }
+    }
 }
