@@ -11,10 +11,10 @@ def go_left(cur_dir):
 INCREMENT_SCORE_VALUE = 1
 CHANGE_DIRECTION_SCORE = 1000
 
-def bfs(maze: list, end_x: int, end_y: int):
+def bfs(maze: list, start_x: int, start_y: int, end_x: int, end_y: int):
     queue = deque()
-    start = (len(maze) - 2, 1, (0, 1), 0)  # x, y, direction, score
-    maze[len(maze) - 2][1] = 0
+    start = (start_x, start_y, (0, 1), 0)  # x, y, direction, score
+    maze[start_x][start_y] = 0
     queue.append(start)
 
     while queue:
@@ -41,6 +41,41 @@ def bfs(maze: list, end_x: int, end_y: int):
 
     return maze[end_x][end_y]
 
+def count_num_places(maze: list, end_x: int, end_y: int) -> int:
+    num_places = 1
+    queue = deque()
+    visited = set()
+
+    end = (end_x, end_y, (1, 0), maze[end_x][end_y])
+    queue.append(end)
+
+    while queue:
+        curr_pos = queue.popleft()
+        curr_x = curr_pos[0]
+        curr_y = curr_pos[1]
+        curr_dir = curr_pos[2]
+        curr_score = curr_pos[3]
+
+        possible_directions = [
+            curr_dir,
+            go_left(curr_dir),
+            go_right(curr_dir)
+        ]
+
+        for direction in possible_directions:
+            new_x, new_y = curr_x + direction[0], curr_y + direction[1]
+
+            if direction == curr_dir:
+                new_score = curr_score - INCREMENT_SCORE_VALUE
+            else:
+                new_score = curr_score - (CHANGE_DIRECTION_SCORE + INCREMENT_SCORE_VALUE)
+            if (isinstance(maze[new_x][new_y], int)) and maze[new_x][new_y] <= new_score and (new_x, new_y) not in visited:
+                visited.add((new_x, new_y))
+                num_places += 1
+                queue.append((new_x, new_y, direction, new_score))
+
+    return num_places
+
 maze = []
 with open("input.txt", 'r') as file:
     maze = [list(line.strip()) for line in file if line.strip()]
@@ -51,5 +86,10 @@ for line in maze:
         if line[i] == 'E':
             end_x = maze.index(line)
             end_y = i
-            break
-print(f"Score: {bfs(maze, end_x, end_y)}")
+        if line[i] == 'S':
+            start_x = maze.index(line)
+            start_y = i
+
+print(f"Score (PART 1): {bfs(maze, start_x, start_y, end_x, end_y)}")
+
+print(f"Num places (PART 2): {count_num_places(maze, end_x, end_y)}")
