@@ -18,15 +18,6 @@ impl RegisterId {
         }
     }
 
-    fn to_char(&self) -> char {
-        match self {
-            RegisterId::A => 'A',
-            RegisterId::B => 'B',
-            RegisterId::C => 'C',
-            RegisterId::IC => '_',
-        }
-    }
-
     fn to_usize(&self) -> usize {
         match self {
             RegisterId::A => 0,
@@ -37,15 +28,14 @@ impl RegisterId {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Register {
-    identifier: RegisterId,
     value: usize,
 }
 
 impl Register {
-    fn new(id: RegisterId, init_value: usize) -> Self {
-        Register { identifier: id, value: init_value }
+    fn new(init_value: usize) -> Self {
+        Register { value: init_value }
     }
 
     fn set_value(&mut self, new_value: usize) {
@@ -54,10 +44,6 @@ impl Register {
 
     fn get_value(&self) -> usize {
         self.value
-    }
-
-    fn get_id(&self) -> RegisterId {
-        self.identifier
     }
 }
 
@@ -97,7 +83,7 @@ impl ComboOperandTrait for ComboOperand {
 }
 
 pub trait Instruction {
-    fn execute(&self, registers: &mut [Register; NUM_REGISTERS]);
+    fn execute(&self, registers: &mut [Register; NUM_REGISTERS], string_to_print: &mut Vec<char>);
 }
 
 #[derive(Debug)]
@@ -113,9 +99,7 @@ pub enum Operation {
 }
 
 impl Instruction for Operation {
-    fn execute(&self, registers: &mut [Register; NUM_REGISTERS]) {
-        /*println!("BEFORE OP {:?}", self);
-        println!("REGISTERS: {:?}", registers);*/
+    fn execute(&self, registers: &mut [Register; NUM_REGISTERS], string_to_print: &mut Vec<char>) {
         match self {
             Operation::Adv(combo_operand) => {
                 let base: usize = 2;
@@ -146,7 +130,7 @@ impl Instruction for Operation {
             },
             Operation::Out(combo_operand) => {
                 let value = combo_operand.take_value(registers) % 8;
-                print!("{},", value);
+                string_to_print.push(std::char::from_digit(value as u32, 10).expect("Value out of range for char conversion"));
                 registers[RegisterId::IC.to_usize()].set_value(registers[RegisterId::IC.to_usize()].get_value() + 1);
             },
             Operation::Bdv(combo_operand) => {
@@ -169,7 +153,7 @@ impl Instruction for Operation {
 
 const NUM_REGISTERS: usize = 3 + 1; //Considering the instruction counter
 
-fn parse_file(reader: BufReader<File>, registers: &mut [Register; NUM_REGISTERS], operations: &mut Vec<Operation>) {
+fn parse_file(reader: BufReader<File>, registers: &mut [Register; NUM_REGISTERS], operations: &mut Vec<Operation>, program_string: &mut Vec<char>) {
     for line in reader.lines() {
         let mut id: char = 'A';
         let mut value: usize = 0;
@@ -196,8 +180,10 @@ fn parse_file(reader: BufReader<File>, registers: &mut [Register; NUM_REGISTERS]
                     let program = program.trim();
                     while i < program.len() {
                         let opcode = program.chars().nth(i).unwrap().to_string().parse::<usize>().expect("Failed to parse value as usize");
+                        program_string.push(program.chars().nth(i).unwrap());
                         i += 2;
                         let operand = program.chars().nth(i).unwrap().to_string().parse::<usize>().expect("Failed to parse value as usize");
+                        program_string.push(program.chars().nth(i).unwrap());
 
                         let operation = match opcode {
                             0 => Operation::Adv(ComboOperand::new(operand)),
@@ -222,28 +208,51 @@ fn parse_file(reader: BufReader<File>, registers: &mut [Register; NUM_REGISTERS]
     }
 }
 
+fn part_1(registers: &mut [Register; NUM_REGISTERS], operations: &mut Vec<Operation>) {
+    let mut i = registers[RegisterId::IC.to_usize()].get_value();
+
+    let mut output: Vec<char> = Vec::new();
+    while i < operations.len() {
+        operations[i].execute(registers, &mut output);
+        i = registers[RegisterId::IC.to_usize()].get_value();
+    }
+
+    print_output(&output);
+}
+
+fn print_output(output: &Vec<char>) {
+    for (i, elem) in output.iter().enumerate() {
+        if i == output.len() - 1 {
+            println!("{}", elem);
+        } else {
+            print!("{},", elem);
+        }
+    }
+}
+
 fn main() {
-    let file = File::open("input2.txt").unwrap();
+    let file = File::open("input.txt").unwrap();
 
     let reader = BufReader::new(file);
 
     let mut registers: [Register; NUM_REGISTERS] = [
-        Register::new(RegisterId::A, 0),
-        Register::new(RegisterId::B, 0),
-        Register::new(RegisterId::C, 0),
-        Register::new(RegisterId::IC, 0)
+        Register::new(0),
+        Register::new(0),
+        Register::new(0),
+        Register::new(0)
     ];
 
     let mut operations: Vec<Operation> = Vec::new();
 
-    parse_file(reader, &mut registers, &mut operations);
+    let mut program: Vec<char> = Vec::new();
 
-    let mut i = registers[RegisterId::IC.to_usize()].get_value();
+    parse_file(reader, &mut registers, &mut operations, &mut program);
 
-    //println!("{:?}", operations);
+    println!("PROGRAM: {:?}", program);
 
-    while i < operations.len() {
-        operations[i].execute(&mut registers);
-        i = registers[RegisterId::IC.to_usize()].get_value();
-    }
+    part_1(&mut registers, &mut operations);
+
+    // For Part 2, look at z3 solver in z3/sol.py
+    // Minimum register A value: 105875099912602
+    
 }
