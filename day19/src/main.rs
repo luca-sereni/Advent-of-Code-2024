@@ -71,7 +71,7 @@ fn build_trie(patterns: &Vec<String>) -> Trie {
     trie_root
 }
 
-fn find_possible_designs(designs: &Vec<String>, pattern_trie: &Trie) -> usize {
+fn find_possible_designs(designs: &Vec<String>, pattern_trie: &Trie, is_part1: bool) -> usize {
     let mut count = 0;
     
     for design in designs.iter() {
@@ -94,8 +94,13 @@ fn find_possible_designs(designs: &Vec<String>, pattern_trie: &Trie) -> usize {
             }
             i += 1;
         }
+        
         if num_ways[design_len] > 0 {
-            count += 1;
+            if is_part1 {
+                count += 1;
+            } else {
+                count += num_ways[design_len];
+            }
         }
     }
 
@@ -113,6 +118,11 @@ fn main() {
 
     let trie = build_trie(&patterns);
 
-    let count = find_possible_designs(&designs, &trie);
+    // Part 1
+    let count = find_possible_designs(&designs, &trie, true);
     println!("Number of possible designs: {}", count);
+
+    // Part 2
+    let total_count = find_possible_designs(&designs, &trie, false);
+    println!("Total number of designs: {}", total_count);
 }
