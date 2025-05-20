@@ -399,6 +399,6 @@ fn main() {
     // PART 1
     println!("Part 1: {}", part1(&wires));
 
-    // PART 2
+    // PART 2 (swaps: rts, z12, jpj, z07, kgj, z26, chv, vvw)
     part2(&wires, &operations);
 }
